@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id "io.freefair.lombok" version "8.10.2"
+    id "io.qameta.allure" version "2.12.0"
 }
 
 group = 'io.telepnef'
@@ -25,6 +26,8 @@ dependencies {
     testImplementation 'commons-io:commons-io:2.17.0'
     testImplementation 'io.rest-assured:rest-assured:5.4.0'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.2'
+    testImplementation 'io.qameta.allure:allure-rest-assured:2.20.1'
+
 
 
 }
@@ -36,15 +39,18 @@ test {
     }
 
     // код для того что бы работали тэги - @Tag(" ")
-    tasks.register("myTags", Test.class){
-        String[] tags = System.getProperty("customTags").split(",")
-        useJUnitPlatform(){
-            for (String tag : tags){
-                includeTags.add(tag)
-            }
-        }
+    tasks.register("myTags", Test.class) {
         testLogging {
             events "passed", "skipped", "failed"
+        }
+        String fullTags = System.getProperty("customTags")
+        if (fullTags != null) {
+            String[] tags = fullTags.split(",")
+            useJUnitPlatform() {
+                for (String tag : tags) {
+                    includeTags.add(tag)
+                }
+            }
         }
     }
 }

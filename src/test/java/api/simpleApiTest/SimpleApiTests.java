@@ -161,18 +161,5 @@ public class SimpleApiTests {
                 .body("token", notNullValue());
 
     }
-    @Test
-    public void loginUser88Test() {
-        Map<String, String> auth = new HashMap<>();
-        auth.put("username", "johnd");
-        auth.put("password", "m38rmF$");
 
-        given().contentType(ContentType.JSON)
-                .body(auth)
-                .post("https://fakestoreapi.com/auth/login")
-                .then().log().all()
-                .statusCode(2002)
-                .body("token", notNullValue());
-
-    }
 }

@@ -1,21 +1,23 @@
 package api.simpleApiTest;
 
+import api.listener.CustomTpl;
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import model.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
 
 
 public class FakestoreapiTests {
@@ -23,7 +25,8 @@ public class FakestoreapiTests {
     @BeforeEach
     public void setUp() {
         RestAssured.baseURI = "https://fakestoreapi.com";
-        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
+        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter(),
+                CustomTpl.customLogFilter().withCustomTemplates());
     }
 
     @Test
@@ -56,9 +59,9 @@ public class FakestoreapiTests {
                 matches("\\d{5}-\\d{4}"));
     }
 
-    @Test
-    public void getAllUsersWithLimitTest() {
-        int limitSize = 3;
+    @ParameterizedTest
+    @ValueSource(ints = {1, 10})
+    public void getAllUsersWithLimitTest(int limitSize) {
 
         List<UserRoot> users = given()
                 .queryParam("limit", limitSize)
@@ -69,7 +72,39 @@ public class FakestoreapiTests {
                 .extract().as(new TypeRef<List<UserRoot>>() {
                 });
 
-        Assertions.assertEquals(3, users.size());
+        Assertions.assertEquals(limitSize, users.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 20})
+    public void getAllUsersWithErrorsParamsTest(int limitSize) {
+
+        List<UserRoot> users = given()
+                .queryParam("limit", limitSize)
+                .get("/users")
+                .then()
+                .statusCode(200)
+                // .extract().jsonPath().getList("", UserRoot.class);
+                .extract().as(new TypeRef<List<UserRoot>>() {
+                });
+
+        Assertions.assertNotEquals(limitSize, users.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 100})
+    public void getAllUsersWithLimitErrorsTest(int limitSize) {
+
+        List<UserRoot> users = given()
+                .queryParam("limit", limitSize)
+                .get("/users")
+                .then()
+                .statusCode(200)
+                // .extract().jsonPath().getList("", UserRoot.class);
+                .extract().as(new TypeRef<List<UserRoot>>() {
+                });
+
+        Assertions.assertEquals(limitSize, users.size());
     }
 
     // проверка сортировки
@@ -93,9 +128,6 @@ public class FakestoreapiTests {
 
         List<Integer> sortedResponseIds = usersSorted
                 .stream().map(UserRoot::getId).toList();
-
-        //  List<Integer> notSortedResponseIds = usersNotSorted
-        //          .stream().map(UserRoot::getId).toList();
 
         List<Integer> sortedByCodeList = usersNotSorted
                 .stream().map(UserRoot::getId).sorted(Comparator.reverseOrder()).toList();
@@ -151,6 +183,21 @@ public class FakestoreapiTests {
 
        Assertions.assertNotNull(token);
     }
+
+    @Test
+    public void loginUserErrorsTest() {
+        AuthData authData = new AuthData("johnd77", "m38rmF$77");
+
+        String token = given().contentType(ContentType.JSON)
+                .body(authData)
+                .post("/auth/login")
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getString("token");
+
+        Assertions.assertNotNull(token);
+    }
+
     private UserRoot getUser() {
         Random random = new Random();
 
