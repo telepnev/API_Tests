@@ -1,5 +1,6 @@
-package api;
+package api.simpleApiTest;
 
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import model.Address;
 import model.Geolocation;
@@ -8,10 +9,7 @@ import model.UserRoot;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -80,7 +78,7 @@ public class SimpleApiTests {
     }
 
     @Test
-    public void addNewUserTest(){
+    public void addNewUserTest() {
         Name name = new Name("Geka", "Telepnev");
         Geolocation geolocation = new Geolocation("-37.3159", "81.1496");
         Address address = Address.builder()
@@ -105,5 +103,62 @@ public class SimpleApiTests {
                 .then().log().all()
                 .statusCode(200)
                 .body("id", notNullValue());
+    }
+
+
+    private UserRoot getUser() {
+        Name name = new Name("Geka", "Telepnev");
+        Geolocation geolocation = new Geolocation("-37.3159", "81.1496");
+        Address address = Address.builder()
+                .city("Voroneg")
+                .street("Wall street")
+                .number(666)
+                .zipcode("12926-3874")
+                .geolocation(geolocation)
+                .build();
+
+        return UserRoot.builder()
+                .email("mail@maol.ru")
+                .username("GekaT")
+                .password("12345567")
+                .name(name)
+                .address(address)
+                .phone("+98877923424234")
+                .build();
+    }
+
+    @Test
+    public void updateUserTest() {
+// нужно получить юзера, изменить у него параметр,
+// в put  подставить его ID и затем сверить что старый пароль не равен новому
+        UserRoot user = getUser();
+        String oldPassword = user.getPassword();
+        user.setPassword("newPassword111");
+
+        given().body(user)
+                .put("https://fakestoreapi.com/users/7")
+                .then().log().all();
+    }
+
+    @Test
+    public void deleteUserTest() {
+        given().delete("https://fakestoreapi.com/users/6")
+                .then().log().all()
+                .statusCode(200);
+    }
+
+    @Test
+    public void loginUserTest() {
+        Map<String, String> auth = new HashMap<>();
+        auth.put("username", "johnd");
+        auth.put("password", "m38rmF$");
+
+        given().contentType(ContentType.JSON)
+                .body(auth)
+                .post("https://fakestoreapi.com/auth/login")
+                .then().log().all()
+                .statusCode(200)
+                .body("token", notNullValue());
+
     }
 }
