@@ -157,7 +157,7 @@ public class SimpleApiTests {
                 .body(auth)
                 .post("https://fakestoreapi.com/auth/login")
                 .then().log().all()
-                .statusCode(200)
+                .statusCode(2002)
                 .body("token", notNullValue());
 
     }
