@@ -2,14 +2,18 @@ package api.simpleApiTest;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import model.Address;
-import model.Geolocation;
-import model.Name;
-import model.UserRoot;
+import model.fakestoreapi.Address;
+import model.fakestoreapi.Geolocation;
+import model.fakestoreapi.Name;
+import model.fakestoreapi.UserRoot;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -72,7 +76,7 @@ public class SimpleApiTests {
         List<Integer> sortedByCodeList = notSortedResponseIds
                 .stream()
                 .sorted(Comparator.reverseOrder())
-                .toList();
+                .collect(Collectors.toList());
 
         Assertions.assertEquals(sortedByCodeList, sortedResponseIds);
     }

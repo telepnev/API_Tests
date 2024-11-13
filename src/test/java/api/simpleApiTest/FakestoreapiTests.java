@@ -1,13 +1,12 @@
 package api.simpleApiTest;
 
 import api.listener.CustomTpl;
-import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
-import model.*;
+import model.fakestoreapi.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 import static io.restassured.RestAssured.given;
@@ -127,10 +127,12 @@ public class FakestoreapiTests {
                 });
 
         List<Integer> sortedResponseIds = usersSorted
-                .stream().map(UserRoot::getId).toList();
+                .stream().map(UserRoot::getId)
+                .collect(Collectors.toList());
 
         List<Integer> sortedByCodeList = usersNotSorted
-                .stream().map(UserRoot::getId).sorted(Comparator.reverseOrder()).toList();
+                .stream().map(UserRoot::getId).sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
 
         Assertions.assertNotEquals(usersSorted, usersNotSorted);
         Assertions.assertEquals(sortedResponseIds, sortedByCodeList);

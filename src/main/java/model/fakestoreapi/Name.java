@@ -1,4 +1,4 @@
-package model;
+package model.fakestoreapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Geolocation {
-    @JsonProperty("lat")
-    private String lat;
+public class Name {
+    @JsonProperty("firstname")
+    public String firstname;
 
-    @JsonProperty("long")
-    private String myLong;
+    @JsonProperty("lastname")
+    public String lastname;
 }

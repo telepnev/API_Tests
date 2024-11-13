@@ -1,4 +1,4 @@
-package model;
+package model.fakestoreapi;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

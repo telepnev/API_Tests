@@ -1,4 +1,4 @@
-package model;
+package model.fakestoreapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
