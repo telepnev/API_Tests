@@ -1,5 +1,6 @@
 package model.swager;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,17 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Requirements{
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Info {
 
-	@JsonProperty("videoCard")
-	private String videoCard;
+    @JsonProperty("status")
+    private String status;
+    @JsonProperty("message")
+    private String message;
 
-	@JsonProperty("hardDrive")
-	private int hardDrive;
 
-	@JsonProperty("osName")
-	private String osName;
-
-	@JsonProperty("ramGb")
-	private int ramGb;
 }
