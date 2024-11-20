@@ -1,12 +1,13 @@
 package api.swagerTests;
 
 import api.listener.CustomTpl;
+import assertions.AssertableResponse;
+import assertions.GenericAssertableResponse;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
-import model.fakestoreapi.AuthData;
 import model.swager.FullUser;
 import model.swager.Info;
 import model.swager.JwtAuthData;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static assertions.Conditions.hasMessage;
+import static assertions.Conditions.hasStatusCode;
 import static io.restassured.RestAssured.given;
 
 public class UserTests {
@@ -26,7 +29,7 @@ public class UserTests {
 
     @BeforeAll
     public static void setUp() {
-        RestAssured.baseURI = "http://85.192.34.140:8080/";
+        RestAssured.baseURI = "http://85.192.34.140:8080/api";
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter(),
                 CustomTpl.customLogFilter().withCustomTemplates());
         random = new Random();
@@ -97,7 +100,22 @@ public class UserTests {
                 .statusCode(400)
                 .extract().jsonPath().getObject("info", Info.class);
 
-        Assertions.assertEquals("Missing login or password", info.getMessage());
+        new AssertableResponse(given().contentType(ContentType.JSON)
+                .body(user)
+                .post("/api/signup")
+                .then())
+                .should(hasMessage("Missing login or password"))
+                .should(hasStatusCode(400));
+
+        new GenericAssertableResponse<Info>(given().contentType(ContentType.JSON)
+                .body(user)
+                .post("/api/signup")
+                .then(), new TypeRef<Info>() {})
+                .should(hasMessage("Missing login or password"))
+                .should(hasStatusCode(400))
+                .asObject().getMessage();
+
+                Assertions.assertEquals("Missing login or password", info.getMessage());
     }
 
     @Test
@@ -413,9 +431,10 @@ public class UserTests {
 
     @Test
     public void positiveGetAllUsersTest() {
-      List<String> listUsers = given().get("/api/users")
+        List<String> listUsers = given().get("/api/users")
                 .then().statusCode(200)
-                .extract().as(new TypeRef<List<String>>() {}); // new TypeRef<List<String>>() {} - если нужен просто СПИСОК чего либо
+                .extract().as(new TypeRef<List<String>>() {
+                }); // new TypeRef<List<String>>() {} - если нужен просто СПИСОК чего либо
         Assertions.assertTrue(listUsers.size() >= 3);
     }
 }
