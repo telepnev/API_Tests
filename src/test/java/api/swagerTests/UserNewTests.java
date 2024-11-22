@@ -1,54 +1,85 @@
 package api.swagerTests;
 
+import api.listener.AdminUser;
+import api.listener.AdminUserResolver;
 import api.listener.CustomTpl;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
+import io.restassured.response.Response;
 import model.swager.FullUser;
+import model.swager.Info;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import service.UserService;
 
 import java.util.List;
-import java.util.Random;
 
 import static assertions.Conditions.hasMessage;
 import static assertions.Conditions.hasStatusCode;
+import static utils.RandomTestData.*;
 
+@ExtendWith(AdminUserResolver.class)
 public class UserNewTests {
     private static UserService userService;
-    public static Random random;
+    private FullUser user;
+    private FullUser adminUser;
+
+    @BeforeEach
+    public void initTestUser() {
+        user = getRandomUser();
+        adminUser = getAdminUser();
+    }
 
     @BeforeAll
     public static void setUp() {
         RestAssured.baseURI = "http://85.192.34.140:8080/api";
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter(),
                 CustomTpl.customLogFilter().withCustomTemplates());
-        random = new Random();
         userService = new UserService();
-    }
-
-    private FullUser getRandomUser() {
-        int randomNumber = Math.abs(random.nextInt());
-
-        return FullUser.builder()
-                .login("telepneves" + randomNumber)
-                .pass("qwerty" + randomNumber)
-                .build();
-    }
-
-    private FullUser getAdminUser() {
-        return FullUser.builder()
-                .login("admin")
-                .pass("admin")
-                .build();
     }
 
 
     @Test
+    public void positiveAdminAuthTest() {
+        String token = userService.auth(adminUser)
+                .should(hasStatusCode(200))
+                .asJwt();
+
+        Assertions.assertNotNull(token);
+    }
+
+    @Test
+    public void positiveAdminAuthWithAnnotationTest(@AdminUser FullUser admin) {
+        String token = userService.auth(admin)
+                .should(hasStatusCode(200))
+                .asJwt();
+
+        Assertions.assertNotNull(token);
+    }
+
+    @Test
     public void positiveRegisterUser201Test() {
-        FullUser user = getRandomUser();
+        Response response = userService
+                .register(user).asResponse();
+
+        Info infoMessage = response.jsonPath().getObject("info", Info.class);
+
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(infoMessage.getMessage())
+                .as("Сообщение о ошибки было не верное")
+                .isEqualTo("FAKE MESSAGE");
+        softAssertions.assertThat(response.statusCode()).as("Статус код не был 201")
+                .isEqualTo(201);
+        softAssertions.assertAll();
+    }
+
+    @Test
+    public void positiveRegisterUserWithGameTest() {
         userService.register(user)
                 .should(hasStatusCode(201))
                 .should(hasMessage("User created"));
@@ -57,7 +88,6 @@ public class UserNewTests {
 
     @Test
     public void negativeRegisterLoginExist400Test() {
-        FullUser user = getRandomUser();
         userService.register(user);
         userService.register(user)
                 .should(hasStatusCode(400))
@@ -66,7 +96,6 @@ public class UserNewTests {
 
     @Test
     public void negativeRegisterNonPassword400Test() {
-        FullUser user = getRandomUser();
         user.setPass(null);
 
         userService.register(user)
@@ -75,18 +104,7 @@ public class UserNewTests {
     }
 
     @Test
-    public void positiveAdminAuthTest() {
-        FullUser user = getAdminUser();
-        String token = userService.auth(user)
-                .should(hasStatusCode(200))
-                .asJwt();
-
-        Assertions.assertNotNull(token);
-    }
-
-    @Test
     public void positiveNewUserAuthTest() {
-        FullUser user = getRandomUser();
         userService.register(user)
                 .should(hasStatusCode(201));
 
@@ -99,7 +117,6 @@ public class UserNewTests {
 
     @Test
     public void negativeAuthTest() {
-        FullUser user = getRandomUser();
         String token = userService.auth(user)
                 .should(hasStatusCode(401))
                 .asJwt();
@@ -109,7 +126,6 @@ public class UserNewTests {
 
     @Test
     public void positiveGetUserInfoTest() {
-        FullUser user = getAdminUser();
         String token = userService.auth(user).asJwt();
         userService.getUserInfo(token)
                 .should(hasStatusCode(200));
@@ -130,7 +146,6 @@ public class UserNewTests {
 
     @Test
     public void positiveChangePasswordNewUserTest() {
-        FullUser user = getRandomUser();
         String oldPassword = user.getPass();
 
         userService.register(user);
@@ -153,8 +168,7 @@ public class UserNewTests {
 
     @Test
     public void negativeChangeAdminPasswordTEst() {
-        FullUser user = getAdminUser();
-        String token = userService.auth(user).asJwt();
+        String token = userService.auth(adminUser).asJwt();
 
         String updatePassword = "newPassword123";
         userService.updatePass(updatePassword, token)
@@ -164,8 +178,7 @@ public class UserNewTests {
 
     @Test
     public void negativeDeleteAdminTest() {
-        FullUser user = getAdminUser();
-        String token = userService.auth(user).asJwt();
+        String token = userService.auth(adminUser).asJwt();
 
         userService.deleteUser(token)
                 .should(hasStatusCode(400))
@@ -174,7 +187,6 @@ public class UserNewTests {
 
     @Test
     public void positiveDeleteUserTest() {
-        FullUser user = getRandomUser();
         userService.register(user);
         String token = userService.auth(user).asJwt();
 
